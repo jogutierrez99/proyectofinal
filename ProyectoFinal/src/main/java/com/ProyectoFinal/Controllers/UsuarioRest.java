@@ -1,5 +1,6 @@
 package com.ProyectoFinal.Controllers;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,15 +52,23 @@ public class UsuarioRest {
 		return userRepo.findAll();
 	}
 
-	@GetMapping("listarUno/{id}")
+	@GetMapping("/listarUno/{id}")
 	public Optional<User> listarUno(@PathVariable("id") Integer id) {
 		return userRepo.findById(id);
 	}
 
-	// add usuario
-	@PostMapping("/add/{roleid}")
-	public void addUser(@PathVariable("roleid") Integer roleid, @RequestBody User usu) {
-
+	//add usuario
+	@RequestMapping("/add")
+	public ModelAndView addUser(@RequestParam(value="roleid") int roleid, @RequestParam(value="user") String user,
+			@RequestParam(value="password") String password) {
+		
+		ModelAndView modelAndView = new ModelAndView();
+		
+		User nuevoUser = new User();
+		
+		nuevoUser.setUser(user);
+		nuevoUser.setPassword(password);
+		
 		Role rol = new Role();
 
 		switch (roleid) {
@@ -69,20 +78,20 @@ public class UsuarioRest {
 			rol.setId(roleid);
 			rol.setRol("admin");
 
-			usu.setRole(rol);
-			usu.setEnabled(1);
+			nuevoUser.setRole(rol);
+			nuevoUser.setEnabled(1);
 
-			userRepo.save(usu);
+			userRepo.save(nuevoUser);
 			break;
 		case 2:
 
 			rol.setId(roleid);
 			rol.setRol("advance");
 
-			usu.setRole(rol);
-			usu.setEnabled(1);
+			nuevoUser.setRole(rol);
+			nuevoUser.setEnabled(1);
 
-			userRepo.save(usu);
+			userRepo.save(nuevoUser);
 			break;
 
 		case 3:
@@ -90,29 +99,37 @@ public class UsuarioRest {
 			rol.setId(roleid);
 			rol.setRol("raso");
 
-			usu.setRole(rol);
-			usu.setEnabled(1);
+			nuevoUser.setRole(rol);
+			nuevoUser.setEnabled(1);
 
-			userRepo.save(usu);
+			userRepo.save(nuevoUser);
 			break;
 
 		default:
-			System.out.println("id diferente");
+			String mensaje = "Role id diferente: 1,2 o 3";
+			modelAndView.addObject("mensaje", mensaje);
 			break;
 		}
+		
+		modelAndView.setViewName("usuarioAdmin");
+		
+		return modelAndView;
 	}
 
 	// delete usuario
-	@DeleteMapping("/delete/{id}")
-	public void deleteUser(@PathVariable("id") int id) {
-
+	@RequestMapping("/delete")
+	public ModelAndView deleteUser(@RequestParam(value="id") int id) {
+		ModelAndView modelAndView = new ModelAndView();
+		
+		modelAndView.setViewName("usuarioAdmin");
 		userRepo.deleteById(id);
-
+		
+		return modelAndView;
 	}
 
 	//Update --> falta diferenciar por role.... admin,advance,raso
-	@RequestMapping("/update")
-	public ModelAndView updateUser(@RequestParam(value = "id") int id, @RequestParam(value = "enabled") int enabled,
+	@RequestMapping("/updateAdmin")
+	public ModelAndView updateUserAdmin(@RequestParam(value = "id") int id, @RequestParam(value = "enabled") int enabled,
 			@RequestParam(value = "roleid") int roleid,
 			@RequestParam(value = "user") String user, @RequestParam(value = "password") String password) {
 		
@@ -162,6 +179,56 @@ public class UsuarioRest {
 		}
 	
 	
+	@RequestMapping("/update")
+	public ModelAndView updateUser(@RequestParam(value = "id") int id,
+			@RequestParam(value = "user") String user, @RequestParam(value = "password") String password) {
+		
+		ModelAndView modelAndView = new ModelAndView();
+		
+		User nuevo = new User();
+		
+		nuevo.setId(id);
+		nuevo.setUser(user);
+		nuevo.setPassword(password);
+		
+		List<User> lista = userRepo.findAll();
+		
+		Role role = new Role();
+		
+		
+		for (User usuario : lista) {
+			
+			if(usuario.getId()==id) {
+				
+				role.setId(usuario.getRole().getId());
+				role.setRol(usuario.getRole().getRol());
+				nuevo.setEnabled(usuario.getEnabled());
+				nuevo.setRole(role);
+				
+			}
+			
+		}
+		
+		
+		userRepo.save(nuevo);
+		
+		switch (nuevo.getRole().getId()) {
+		case 2:
+			modelAndView.setViewName("usuarioAdvance");
+			break;
+			
+		case 3:
+			modelAndView.setViewName("usuarioRaso");
+			break;
+
+		default:
+			break;
+		}
+		
+		
+		return modelAndView;
+		
+		}
 	
 	
 	
